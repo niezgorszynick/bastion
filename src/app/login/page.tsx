@@ -9,8 +9,7 @@ export default function LoginPage() {
 
   async function signIn() {
     const supabase = supabaseBrowser();
-    const origin =
-  typeof window !== "undefined" ? window.location.origin : "";
+    const origin = window.location.origin;
 
 const { error } = await supabase.auth.signInWithOtp({
   email,
@@ -18,6 +17,7 @@ const { error } = await supabase.auth.signInWithOtp({
     emailRedirectTo: `${origin}/auth/callback`,
   },
 });
+
 
   }
 
