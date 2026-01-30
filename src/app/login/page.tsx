@@ -30,9 +30,14 @@ const { error } = await supabase.auth.signInWithOtp({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <button className="border rounded px-3 py-2 w-full" onClick={signIn}>
+      <button
+        type="button"
+        className="border rounded px-3 py-2 w-full"
+        onClick={signIn}
+      >
         Send magic link
       </button>
+
       {sent && <p className="text-sm">Check your email for the login link.</p>}
     </div>
   );
