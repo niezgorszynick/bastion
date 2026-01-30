@@ -9,14 +9,16 @@ export default function LoginPage() {
 
   async function signIn() {
     const supabase = supabaseBrowser();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-    if (!error) setSent(true);
-    else alert(error.message);
+    const origin =
+  typeof window !== "undefined" ? window.location.origin : "";
+
+const { error } = await supabase.auth.signInWithOtp({
+  email,
+  options: {
+    emailRedirectTo: `${origin}/auth/callback`,
+  },
+});
+
   }
 
   return (
