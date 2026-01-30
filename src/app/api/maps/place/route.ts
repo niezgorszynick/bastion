@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const userId = req.headers.get("x-user-id");
   if (!userId) return NextResponse.json({ error: "Missing user" }, { status: 401 });
 
-  const supabase = supabaseServer();
+  const supabase = await supabaseServer();
 
   // Role check: editor or owner
   const { data: mapRow, error: mapErr } = await supabase
