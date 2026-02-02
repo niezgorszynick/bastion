@@ -4,41 +4,80 @@ import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [identifier, setIdentifier] = useState(""); // Email or Username
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  async function signIn() {
+  async function handleLogin() {
+    setLoading(true);
     const supabase = supabaseBrowser();
-  const origin = window.location.origin;
+    
+    // Logic: If it doesn't look like an email, we'd normally query a 
+    // public 'profiles' table here to find the email linked to a username.
+    // For now, let's assume 'identifier' is the email for the MVP.
+    const { error } = await supabase.auth.signInWithPassword({
+      email: identifier,
+      password: password,
+    });
 
-const { error } = await supabase.auth.signInWithOtp({
-  email,
-  options: {
-    emailRedirectTo: `${origin}/auth/callback`,
-  },
-});
+    if (error) {
+      setMessage(error.message);
+    } else {
+      window.location.href = "/"; // Redirect on success
+    }
+    setLoading(false);
+  }
 
+  async function handleResetPassword() {
+    if (!identifier.includes("@")) {
+      return setMessage("Please enter your email to reset password.");
+    }
+    
+    const supabase = supabaseBrowser();
+    const { error } = await supabase.auth.resetPasswordForEmail(identifier, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
 
+    if (error) setMessage(error.message);
+    else setMessage("Reset link sent to your email!");
   }
 
   return (
-    <div className="p-6 max-w-md mx-auto space-y-3">
-      <h1 className="text-2xl font-semibold">Login</h1>
+    <div className="p-6 max-w-md mx-auto space-y-4 flex flex-col border rounded-lg shadow-sm">
+      <h1 className="text-2xl font-bold">Bastion Login</h1>
+      
       <input
-        className="border rounded px-3 py-2 w-full"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        className="border rounded px-3 py-2 w-full text-black"
+        placeholder="Email or Username"
+        value={identifier}
+        onChange={(e) => setIdentifier(e.target.value)}
       />
+
+      <input
+        className="border rounded px-3 py-2 w-full text-black"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+
       <button
-        type="button"
-        className="border rounded px-3 py-2 w-full"
-        onClick={signIn}
+        className="bg-blue-600 text-white rounded px-3 py-2 w-full disabled:opacity-50"
+        onClick={handleLogin}
+        disabled={loading}
       >
-        Send magic link
+        {loading ? "Authenticating..." : "Sign In"}
       </button>
 
-      {sent && <p className="text-sm">Check your email for the login link.</p>}
+      <button
+        className="text-sm text-gray-500 hover:underline"
+        onClick={handleResetPassword}
+      >
+        Forgot Password?
+      </button>
+
+      {message && <p className="text-sm text-red-500">{message}</p>}
     </div>
   );
 }

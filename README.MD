@@ -35,6 +35,8 @@ This project is under active development.
 - Context menu for buildings
 - Bastion turn mechanics
 - Authentication and user roles
+- DM panel for tracking changes, reversing and skipping turns
+- Gold/material/headcount cost constraints
 
 ---
 

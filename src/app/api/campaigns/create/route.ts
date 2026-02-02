@@ -12,39 +12,25 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
 
-  // NOTE: For a real app, you'd validate the user via JWT/cookies.
-  // For MVP simplicity, pass user id from client after auth (or add middleware later).
-  const userId = req.headers.get("x-user-id");
-  if (!userId) return NextResponse.json({ error: "Missing user" }, { status: 401 });
-
   const supabase = await supabaseServer();
 
-  const { data: campaign, error: cErr } = await supabase
-    .from("campaigns")
-    .insert({ name: parsed.data.name, owner_id: userId })
-    .select()
-    .single();
+  const { data: userData, error: userErr } = await supabase.auth.getUser();
+  if (userErr || !userData.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (cErr) return NextResponse.json({ error: cErr.message }, { status: 500 });
-
-  await supabase.from("campaign_members").insert({
-    campaign_id: campaign.id,
-    user_id: userId,
-    role: "owner",
+  const { data, error } = await supabase.rpc("create_campaign_with_map", {
+    p_name: parsed.data.name,
+    p_width: parsed.data.width,
+    p_height: parsed.data.height,
+    p_theme: "grasslands",
   });
 
-  const { data: map, error: mErr } = await supabase
-    .from("maps")
-    .insert({
-      campaign_id: campaign.id,
-      width: parsed.data.width,
-      height: parsed.data.height,
-      theme: "grasslands",
-    })
-    .select()
-    .single();
+  if (error) {
+    return NextResponse.json({ error: "RPC failed", details: error.message }, { status: 500 });
+  }
 
-  if (mErr) return NextResponse.json({ error: mErr.message }, { status: 500 });
-
-  return NextResponse.json({ campaign, map });
+  const row = Array.isArray(data) ? data[0] : data;
+  return NextResponse.json({
+    campaign: { id: row.campaign_id },
+    map: { id: row.map_id, width: parsed.data.width, height: parsed.data.height },
+  });
 }

@@ -434,7 +434,7 @@ useEffect(() => {
 
     const res = await fetch("/api/maps/remove", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-user-id": userId },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mapId, x: tx, y: ty }),
     });
 
@@ -458,8 +458,7 @@ setPlacements(next);
 const res = await fetch("/api/maps/place", {
   method: "POST",
   headers: {
-    "Content-Type": "application/json",
-    "x-user-id": userId,
+    "Content-Type": "application/json"
   },
   body: JSON.stringify({
     mapId,
