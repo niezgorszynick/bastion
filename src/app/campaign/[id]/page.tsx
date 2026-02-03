@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { MapCanvas } from "@/components/MapCanvas";
+import { BUILDINGS, BuildingKind } from "@/lib/game/buildings";
 
 type MenuState = null | {
   x: number;
@@ -11,6 +12,7 @@ type MenuState = null | {
   tx: number;
   ty: number;
   hasPlacement: boolean;
+  buildingKind?: string;
 };
 
 export default function CampaignPage() {
@@ -118,121 +120,149 @@ export default function CampaignPage() {
     </div>
   );
 
-  return (
-    <div className="h-screen p-4 flex flex-col gap-3 bg-slate-50">
-      <header className="flex justify-between items-center">
-        <h1 className="text-xl font-bold text-slate-800">Bastion Architect</h1>
-        <span className="text-xs font-mono bg-slate-200 px-2 py-1 rounded text-slate-600">
-          ID: {campaignId.slice(0, 8)}...
-        </span>
-      </header>
+ return (
+    <div className="h-screen flex bg-slate-100"> {/* Main Flex Container */}
+      
+      {/* SIDEBAR PALETTE */}
+      <aside className="w-80 bg-white border-r border-slate-200 flex flex-col p-6 shadow-sm z-10">
+        <header className="mb-8">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Bastion Architect</h1>
+          <p className="text-xs text-slate-400 font-mono uppercase">ID: {campaignId.slice(0, 8)}</p>
+        </header>
 
-      <div className="flex gap-2 items-center bg-white p-2 rounded-lg border shadow-sm">
-        <button
-          type="button"
-          {...paletteBtn(selectedKind === "workshop")}
-          onClick={() => setSelectedKind("workshop")}
-        >
-          Workshop
-        </button>
-
-        <button
-          type="button"
-          {...paletteBtn(selectedKind === "barracks")}
-          onClick={() => setSelectedKind("barracks")}
-        >
-          Barracks
-        </button>
-
-        <div className="h-6 w-[1px] bg-slate-200 mx-2" />
-        <span className="text-sm text-slate-600 font-medium">
-          Rotation: {rotation * 90}° <kbd className="ml-1 px-1 bg-slate-100 border rounded text-xs">R</kbd>
-        </span>
-      </div>
-
-      <div className="flex-1 border-2 border-dashed border-slate-200 rounded-xl overflow-hidden bg-white relative">
-        <MapCanvas
-          mapId={map.id}
-          width={map.width}
-          height={map.height}
-          userId={userId}
-          selectedKind={selectedKind}
-          rotation={rotation}
-          rotateIntent={rotateIntent}
-          removeIntent={removeIntent}
-          onTileContextMenu={({ clientX, clientY, tx, ty, hasPlacement }) => {
-            setMenu({ x: clientX, y: clientY, tx, ty, hasPlacement });
-          }}
-        />
-      </div>
-
-      <footer className="flex justify-between items-center text-xs text-slate-500">
-        <p>Left-click: Build | Shift+Click: Remove | Right-click: Menu</p>
-        <p>Right-drag: Pan | Wheel: Zoom</p>
-      </footer>
-
-      {menu && (
-        <div
-          className="fixed z-50 bg-white border border-slate-200 rounded-lg shadow-xl p-1 text-sm min-w-[120px]"
-          style={{ left: menu.x, top: menu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="px-3 py-2 text-slate-400 border-b mb-1 font-mono text-[10px]">
-            Coords: {menu.tx}, {menu.ty}
+        <section className="flex-1 space-y-6">
+          <div>
+            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Facilities</h2>
+            <div className="grid grid-cols-1 gap-2">
+              {(Object.keys(BUILDINGS) as BuildingKind[]).map((kind) => (
+                <button
+                  key={kind}
+                  {...paletteBtn(selectedKind === kind)}
+                  onClick={() => setSelectedKind(kind)}
+                  className="w-full text-left px-4 py-3 rounded-xl border-2 flex flex-col transition-all"
+                >
+                  <span className="font-bold">{BUILDINGS[kind].name}</span>
+                  <span className="text-[10px] opacity-70">Cost: {BUILDINGS[kind].baseCost}gp</span>
+                </button>
+              ))}
+            </div>
           </div>
 
-          <button
-            className="block w-full text-left px-3 py-2 hover:bg-red-50 hover:text-red-600 rounded disabled:opacity-30 transition-colors"
-            disabled={!menu.hasPlacement}
-            onClick={async () => {
-              setRemoveIntent({ x: menu.tx, y: menu.ty, t: Date.now() });
-              setMenu(null);
+          {/* ACTIVE SELECTION DESCRIPTION */}
+          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <h3 className="text-xs font-black text-slate-900 uppercase mb-2">Details</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              {BUILDINGS[selectedKind].description}
+            </p>
+          </div>
+        </section>
 
-              const res = await fetch("/api/maps/remove", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mapId: map.id, x: menu.tx, y: menu.ty }),
-              });
+        <footer className="pt-6 border-t border-slate-100 space-y-2">
+           <div className="flex justify-between items-center text-sm">
+             <span className="text-slate-500">Rotation</span>
+             <span className="font-mono font-bold bg-slate-200 px-2 py-1 rounded">{rotation * 90}°</span>
+           </div>
+           <p className="text-[10px] text-slate-400 italic text-center">Press 'R' to rotate</p>
+        </footer>
+      </aside>
 
-              if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                alert(err.error || "Remove failed");
-              }
+      {/* MAIN CANVAS AREA */}
+      <main className="flex-1 relative flex flex-col p-4 overflow-hidden">
+        <div className="flex-1 bg-white rounded-2xl shadow-inner border border-slate-200 overflow-hidden relative">
+          <MapCanvas
+            mapId={map.id}
+            width={map.width}
+            height={map.height}
+            userId={userId}
+            selectedKind={selectedKind}
+            rotation={rotation}
+            rotateIntent={rotateIntent}
+            removeIntent={removeIntent}
+            onTileContextMenu={({ clientX, clientY, tx, ty, hasPlacement, buildingKind }) => {
+              setMenu({ x: clientX, y: clientY, tx, ty, hasPlacement, buildingKind });
             }}
-          >
-            Remove Facility
-          </button>
-
-          <button
-            className="block w-full text-left px-3 py-2 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
-            disabled={!menu.hasPlacement}
-            onClick={async () => {
-              setRotateIntent({ x: menu.tx, y: menu.ty, t: Date.now() });
-              setMenu(null);
-
-              const res = await fetch("/api/maps/rotate", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mapId: map.id, x: menu.tx, y: menu.ty }),
-              });
-
-              if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                alert(err.error || "Rotate failed");
-              }
-            }}
-          >
-            Rotate ↻
-          </button>
-
-          <button
-            className="block w-full text-left px-3 py-2 hover:bg-slate-100 rounded text-slate-400 border-t mt-1"
-            onClick={() => setMenu(null)}
-          >
-            Cancel
-          </button>
+          />
         </div>
-      )}
+      </main>
+
+      {/* CONTEXT MENU GOES HERE (as implemented in Step 1) */}
+{menu && (
+  <div
+    className="fixed z-50 bg-white border border-slate-300 rounded-lg shadow-2xl p-2 min-w-[180px]" // Increased padding and shadow
+    style={{ left: menu.x, top: menu.y }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    {/* 1. Building Info Header - Look up data from our new registry */}
+    {menu.hasPlacement && menu.buildingKind && (
+      <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-md mb-2">
+        <div className="font-bold text-slate-900 text-sm"> {/* Standardized font size */}
+          {BUILDINGS[menu.buildingKind as BuildingKind]?.name}
+        </div>
+        <div className="text-xs text-slate-500 leading-normal"> {/* Better readability */}
+          {BUILDINGS[menu.buildingKind as BuildingKind]?.description}
+        </div>
+      </div>
+    )}
+
+    {/* 2. Coordinates Display */}
+    <div className="px-3 py-1 text-slate-400 font-mono text-xs uppercase tracking-tighter mb-2">
+      Location: {menu.tx}, {menu.ty}
+    </div>
+
+    {/* 3. Action: Rotate */}
+    <button
+      className="block w-full text-left px-3 py-2 hover:bg-slate-100 rounded disabled:opacity-30 transition-colors"
+      disabled={!menu.hasPlacement}
+      onClick={async () => {
+        setRotateIntent({ x: menu.tx, y: menu.ty, t: Date.now() });
+        setMenu(null);
+
+        const res = await fetch("/api/maps/rotate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mapId: map.id, x: menu.tx, y: menu.ty }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "Rotate failed");
+        }
+      }}
+    >
+      Rotate ↻
+    </button>
+
+    {/* 4. Action: Dismantle (Renamed from 'Remove' for flavor) */}
+    <button
+      className="block w-full text-left px-3 py-2 hover:bg-red-50 hover:text-red-600 rounded disabled:opacity-30 transition-colors"
+      disabled={!menu.hasPlacement}
+      onClick={async () => {
+        setRemoveIntent({ x: menu.tx, y: menu.ty, t: Date.now() });
+        setMenu(null);
+
+        const res = await fetch("/api/maps/remove", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mapId: map.id, x: menu.tx, y: menu.ty }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          alert(err.error || "Remove failed");
+        }
+      }}
+    >
+      Dismantle Facility
+    </button>
+
+    <button
+      className="block w-full text-left px-3 py-2 hover:bg-slate-100 rounded text-slate-400 border-t mt-1"
+      onClick={() => setMenu(null)}
+    >
+      Cancel
+    </button>
+  </div>
+)}
     </div>
   );
 }

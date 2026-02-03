@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import UserRow from "@/components/admin/UserRow";
 import CreateUserForm from "@/components/admin/CreateUserForm";

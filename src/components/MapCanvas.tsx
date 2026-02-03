@@ -1,5 +1,6 @@
 "use client";
 
+import { BUILDINGS, BuildingKind } from "@/lib/game/buildings";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
@@ -35,7 +36,7 @@ export function MapCanvas({
   rotation?: number;
   rotateIntent?: { x:number; y:number; t:number } | null;
   removeIntent?: { x:number; y:number; t:number } | null;
-  onTileContextMenu?: (args: { clientX: number; clientY: number; tx: number; ty: number; hasPlacement: boolean }) => void;
+  onTileContextMenu?: (args: { clientX: number; clientY: number; tx: number; ty: number; hasPlacement: boolean; buildingKind?: string; }) => void;
 }) {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -214,9 +215,17 @@ const drawTileRotated = (
 
 
     const kindToUV = (kind: string) => {
-      if (kind === "barracks") return tilesImgRef.current ? tileUV.barracks : tileUV.workshop;
-      return tileUV.workshop;
-    };
+    const building = BUILDINGS[kind as BuildingKind];
+    if (building) {
+      return {
+        sx: building.sprite[0] * TILE,
+        sy: building.sprite[1] * TILE,
+        sw: TILE,
+        sh: TILE,
+      };
+    }
+    return tileUV.workshop; // Fallback
+};
 
     const render = () => {
       const cw = canvas.clientWidth;
@@ -491,16 +500,23 @@ if (!res.ok) {
       });
     };
 
-    // prevent context menu on right click
-    const onContextMenu = (e: MouseEvent) => {
-  e.preventDefault();
+  const onContextMenu = (e: MouseEvent) => {
+    e.preventDefault();
 
-  const { tx, ty } = toTile(e.clientX, e.clientY);
-  if (tx < 0 || ty < 0 || tx >= width || ty >= height) return;
+    const { tx, ty } = toTile(e.clientX, e.clientY);
+    if (tx < 0 || ty < 0 || tx >= width || ty >= height) return;
 
-  const hasPlacement = placementsRef.current.has(key(tx, ty));
-  onTileContextMenu?.({ clientX: e.clientX, clientY: e.clientY, tx, ty, hasPlacement });
-};
+    const placement = placementsRef.current.get(key(tx, ty));
+    
+    onTileContextMenu?.({ 
+      clientX: e.clientX, 
+      clientY: e.clientY, 
+      tx, 
+      ty, 
+      hasPlacement: !!placement,
+      buildingKind: placement?.kind // Now passing the specific kind
+    });
+  };
 
 
     canvas.addEventListener("mousemove", onMove);
