@@ -104,8 +104,8 @@ export default function CampaignPage() {
       }
     };
 
-    fetchMap(); // <--- YOU NEEDED THIS CALL
-  }, [campaignId]); // <--- YOU NEEDED THIS CLOSING BRACE
+    fetchMap(); 
+  }, [campaignId]); 
 
   if (!userId) return <div className="p-6 text-slate-600">Checking authentication...</div>;
   if (!map) return (
@@ -121,53 +121,62 @@ export default function CampaignPage() {
   );
 
  return (
-    <div className="h-screen flex bg-slate-100"> {/* Main Flex Container */}
-      
-      {/* SIDEBAR PALETTE */}
-      <aside className="w-80 bg-white border-r border-slate-200 flex flex-col p-6 shadow-sm z-10">
-        <header className="mb-8">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">Bastion Architect</h1>
-          <p className="text-xs text-slate-400 font-mono uppercase">ID: {campaignId.slice(0, 8)}</p>
-        </header>
+    <div className="h-screen flex bg-slate-100 overflow-hidden"> 
+  <aside className="w-80 min-w-[320px] max-w-[320px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col p-6 shadow-sm z-10">
+    <header className="mb-8">
+      <h1 className="text-2xl font-black text-slate-900 tracking-tight">Bastion Architect</h1>
+      <p className="text-xs text-slate-400 font-mono uppercase tracking-wider">
+        ID: {campaignId.slice(0, 8)}
+      </p>
+    </header>
 
-        <section className="flex-1 space-y-6">
-          <div>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Facilities</h2>
-            <div className="grid grid-cols-1 gap-2">
-              {(Object.keys(BUILDINGS) as BuildingKind[]).map((kind) => (
-                <button
-                  key={kind}
-                  {...paletteBtn(selectedKind === kind)}
-                  onClick={() => setSelectedKind(kind)}
-                  className="w-full text-left px-4 py-3 rounded-xl border-2 flex flex-col transition-all"
-                >
-                  <span className="font-bold">{BUILDINGS[kind].name}</span>
-                  <span className="text-[10px] opacity-70">Cost: {BUILDINGS[kind].baseCost}gp</span>
-                </button>
-              ))}
-            </div>
-          </div>
+    <section className="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
+      <div>
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+          Facilities
+        </h2>
+        <div className="grid grid-cols-1 gap-3">
+          {(Object.keys(BUILDINGS) as BuildingKind[]).map((kind) => (
+            <button
+              key={kind}
+              onClick={() => setSelectedKind(kind)}
+              className={`w-full text-left px-4 py-4 rounded-xl border-2 transition-all flex flex-col gap-1 ${
+                selectedKind === kind 
+                  ? "border-blue-600 bg-blue-50 shadow-sm" 
+                  : "border-slate-100 hover:border-slate-300"
+              }`}
+            >
+              <span className="font-bold text-slate-900">{BUILDINGS[kind].name}</span>
+              <span className="text-[10px] text-blue-700 font-bold uppercase tracking-tighter">
+                {BUILDINGS[kind].baseCost} GP
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
 
-          {/* ACTIVE SELECTION DESCRIPTION */}
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <h3 className="text-xs font-black text-slate-900 uppercase mb-2">Details</h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              {BUILDINGS[selectedKind].description}
-            </p>
-          </div>
-        </section>
+      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+        <h3 className="text-xs font-black text-slate-900 uppercase mb-2">Facility Details</h3>
+        <p className="text-sm text-slate-600 leading-relaxed">
+          {BUILDINGS[selectedKind].description}
+        </p>
+      </div>
+    </section>
 
-        <footer className="pt-6 border-t border-slate-100 space-y-2">
-           <div className="flex justify-between items-center text-sm">
-             <span className="text-slate-500">Rotation</span>
-             <span className="font-mono font-bold bg-slate-200 px-2 py-1 rounded">{rotation * 90}°</span>
-           </div>
-           <p className="text-[10px] text-slate-400 italic text-center">Press 'R' to rotate</p>
-        </footer>
-      </aside>
+    <footer className="pt-6 mt-auto border-t border-slate-100">
+      <div className="flex justify-between items-center text-sm mb-4">
+        <span className="text-slate-500 font-medium">Placement Rotation</span>
+        <span className="font-mono font-bold bg-slate-200 px-2 py-1 rounded text-slate-700">
+          {rotation * 90}°
+        </span>
+      </div>
+      <p className="text-[10px] text-slate-400 italic text-center">
+        Press 'R' to rotate placement direction.
+      </p>
+    </footer>
+  </aside>
 
-      {/* MAIN CANVAS AREA */}
-      <main className="flex-1 relative flex flex-col p-4 overflow-hidden">
+  <main className="flex-1 relative bg-slate-100 p-6 overflow-hidden">
         <div className="flex-1 bg-white rounded-2xl shadow-inner border border-slate-200 overflow-hidden relative">
           <MapCanvas
             mapId={map.id}
@@ -184,21 +193,19 @@ export default function CampaignPage() {
           />
         </div>
       </main>
-
-      {/* CONTEXT MENU GOES HERE (as implemented in Step 1) */}
 {menu && (
   <div
     className="fixed z-50 bg-white border border-slate-300 rounded-lg shadow-2xl p-2 min-w-[180px]" // Increased padding and shadow
     style={{ left: menu.x, top: menu.y }}
     onClick={(e) => e.stopPropagation()}
   >
-    {/* 1. Building Info Header - Look up data from our new registry */}
+
     {menu.hasPlacement && menu.buildingKind && (
       <div className="px-3 py-2 border-b border-slate-100 bg-slate-50 rounded-t-md mb-2">
-        <div className="font-bold text-slate-900 text-sm"> {/* Standardized font size */}
+        <div className="font-bold text-slate-900 text-sm"> 
           {BUILDINGS[menu.buildingKind as BuildingKind]?.name}
         </div>
-        <div className="text-xs text-slate-500 leading-normal"> {/* Better readability */}
+        <div className="text-xs text-slate-500 leading-normal"> 
           {BUILDINGS[menu.buildingKind as BuildingKind]?.description}
         </div>
       </div>
