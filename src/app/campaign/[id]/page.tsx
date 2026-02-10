@@ -121,7 +121,7 @@ export default function CampaignPage() {
   );
 
  return (
-    <div className="h-screen flex bg-slate-100 overflow-hidden"> 
+    <div className="h-full flex bg-slate-100 overflow-hidden"> 
   <aside className="w-80 min-w-[320px] max-w-[320px] flex-shrink-0 bg-white border-r border-slate-200 flex flex-col p-6 shadow-sm z-10">
     <header className="mb-8">
       <h1 className="text-2xl font-black text-slate-900 tracking-tight">Bastion Architect</h1>
@@ -176,8 +176,8 @@ export default function CampaignPage() {
     </footer>
   </aside>
 
-  <main className="flex-1 relative bg-slate-100 p-6 overflow-hidden">
-        <div className="flex-1 bg-white rounded-2xl shadow-inner border border-slate-200 overflow-hidden relative">
+ <main className="flex-1 flex flex-col relative bg-slate-100 p-6 overflow-hidden">
+        <div className="h-full min-h-0 border-2 border-dashed border-slate-200 rounded-xl overflow-hidden bg-white relative">
           <MapCanvas
             mapId={map.id}
             width={map.width}

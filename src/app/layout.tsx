@@ -5,14 +5,10 @@ export const metadata = {
   description: "Pixel-art bastion city builder",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className="h-full">
+      <body className="h-full">{children}</body>
     </html>
   );
 }
